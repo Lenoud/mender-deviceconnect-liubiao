@@ -1,0 +1,43 @@
+{
+  "name": "mender-gui-e2e-tests",
+  "version": "2.0.0",
+  "description": "Test mender e2e - with focus on the GUI",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mendersoftware/integration.git"
+  },
+  "scripts": {
+    "script": "node run.js",
+    "test": "npx playwright test",
+    "test-visual": "PWDEBUG=1 npx playwright test",
+    "test-visual-new": "npx playwright test --ui"
+  },
+  "author": "Northern.tech AS",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://northerntech.atlassian.net/projects/MEN"
+  },
+  "type": "module",
+  "homepage": "https://mender.io",
+  "devDependencies": {
+    "@bgotink/playwright-coverage": "^0.3.2",
+    "@playwright/test": "1.60.0",
+    "@sidewinder1138/saml-idp": "^1.4.0",
+    "chalk": "^5.6.2",
+    "commander": "^15.0.0",
+    "dayjs": "^1.11.21",
+    "docker-compose": "^1.4.2",
+    "inquirer": "^14.0.2",
+    "jsqr": "1.4.0",
+    "jwt-decode": "^4.0.0",
+    "md5": "^2.3.0",
+    "ora": "^9.4.0",
+    "otplib": "^13.4.1",
+    "pixelmatch": "^7.2.0",
+    "pngjs": "7.0.0",
+    "typescript": "^6.0.3",
+    "uuid": "^14.0.0",
+    "validator": "^13.15.35",
+    "yaml": "^2.9.0"
+  }
+}
