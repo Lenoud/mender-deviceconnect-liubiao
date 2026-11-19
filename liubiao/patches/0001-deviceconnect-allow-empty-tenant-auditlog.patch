@@ -1,0 +1,54 @@
+diff --git a/backend/services/deviceconnect/client/workflows/client.go b/backend/services/deviceconnect/client/workflows/client.go
+index 025f629c..7e60198b 100644
+--- a/backend/services/deviceconnect/client/workflows/client.go
++++ b/backend/services/deviceconnect/client/workflows/client.go
+@@ -121,7 +121,9 @@ func (c *client) SubmitAuditLog(ctx context.Context, log AuditLog) error {
+ 		return errors.Wrap(err, "workflows: invalid AuditLog entry")
+ 	}
+ 	id := identity.FromContext(ctx)
+-	if id == nil || id.Tenant == "" {
++	// liubiao: Mender 开源版是单租户，身份里没有 tenant；只要求请求带身份，
++	// 空 tenant 原样提交给 workflows（审计服务按空租户存储）。
++	if id == nil {
+ 		return errors.New("workflows: Context lacking tenant identity")
+ 	}
+ 	wflow := AuditWorkflow{
+diff --git a/backend/services/deviceconnect/client/workflows/client_test.go b/backend/services/deviceconnect/client/workflows/client_test.go
+index 63bae8da..26d190c9 100644
+--- a/backend/services/deviceconnect/client/workflows/client_test.go
++++ b/backend/services/deviceconnect/client/workflows/client_test.go
+@@ -195,6 +195,34 @@ func TestSubmitAuditLog(t *testing.T) {
+ 			EventTS: time.Unix(1234567890, 0),
+ 		},
+ 
++		Response: &http.Response{
++			StatusCode: 201,
++		},
++	}, {
++		Name: "ok, open source identity without tenant",
++
++		CTX: requestid.WithContext(
++			identity.WithContext(
++				context.Background(),
++				&identity.Identity{
++					Subject: "4cd02655-d45e-464f-9790-e730286ff888",
++					IsUser:  true,
++				},
++			),
++			"testing"),
++		AuditLog: AuditLog{
++			Action: ActionTerminalOpen,
++			Actor: Actor{
++				ID:   "4cd02655-d45e-464f-9790-e730286ff888",
++				Type: ActorUser,
++			},
++			Object: Object{
++				ID:   "4cd02655-d45e-464f-9790-e730286ff889",
++				Type: ObjectDevice,
++			},
++			EventTS: time.Unix(1234567890, 0),
++		},
++
+ 		Response: &http.Response{
+ 			StatusCode: 201,
+ 		},
