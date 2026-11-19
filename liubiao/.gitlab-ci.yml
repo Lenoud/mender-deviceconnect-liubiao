@@ -1,0 +1,47 @@
+# mender-deviceconnect-liubiao：上游 v4.1.4 原样源码 + liubiao/patches 构建时补丁。
+# 项目设置的 CI 配置路径为 liubiao/.gitlab-ci.yml；根目录 .gitlab-ci.yml 是上游自己的流水线，不使用。
+# MR 只验证与构建；受保护 main 构建并推送 Harbor（Harbor 凭据为实例级受保护变量）。
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS && $CI_PIPELINE_SOURCE == "push"
+      when: never
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+stages:
+  - verify
+  - build
+
+verify-upstream-baseline:
+  stage: verify
+  image: harbor.skyrisai.com/dockerhub-daocloud/library/golang:1.26.5
+  variables:
+    GIT_DEPTH: "0"
+  script:
+    - sh liubiao/verify.sh
+
+include:
+  - component: git.skyrisai.com/origin/tech/cicd/gitlab-ci-components/docker-build@0.6.0
+    inputs:
+      job_name: build-deviceconnect-image
+      stage: build
+      image_repository: harbor.skyrisai.com/develop/mender-deviceconnect-liubiao
+      dockerfile: liubiao/Dockerfile
+      context: .
+      platform: linux/amd64
+      build_args_file: .ci-build.args
+      push_image: false
+      tag_prefix: upstream-4.1.4
+
+build-deviceconnect-image:
+  needs:
+    - verify-upstream-baseline
+  # 构建参数只含版本号，不含敏感信息；生成的文件不入库，也不进入构建上下文。
+  before_script:
+    - . liubiao/upstream.env
+    - printf 'SOURCE_VERSION=%s+liubiao.%s\n' "${UPSTREAM_TAG}" "${CI_COMMIT_SHORT_SHA}" > .ci-build.args
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_REF_PROTECTED == "true"
+      variables:
+        COMPONENT_PUSH_IMAGE: "true"
